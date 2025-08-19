@@ -77,8 +77,8 @@ void setup() {
 void loop() {
     //Maintain internet connection before continuing
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi not connected, attempting to reconnect...");
-        wifiConnect();
+        WiFi.reconnect();
+        delay(5000);
     }
 
     //Keep track of time for running check and alert intervals
@@ -115,6 +115,8 @@ void wifiConnect(){
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASS);
     Serial.print("Connecting to WiFi");
+    WiFi.setAutoReconnect(true);
+    WiFi.persistent(true);
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
         delay(1000);
@@ -248,7 +250,7 @@ void alert(){
     }
 
     //Check whether to send out a critical alert
-    if(currentTemp < criticalTemp && !criticalAlertActive){
+    if(currentTemp < criticalTemp){
         criticalAlertActive = true;
         if(notifs){
             for(int i = 0; i < numAlerts; i++){
@@ -270,7 +272,7 @@ void readTemp(){
 //Load in saved data stored regarding the temperature ranges
 //The numbers next to the key name are default values
 void loadData(){
-    tempSettings.begin("tempSettings", false);
+    tempSettings.begin("tempSettings", true);
     minTemp = tempSettings.getFloat("minTemp", 10.0);
     maxTemp = tempSettings.getFloat("maxTemp", 35.0);
     notifs = tempSettings.getBool("notifs", true);
@@ -279,7 +281,7 @@ void loadData(){
 
 //Save data after updating values so that the settings persist after power cycles
 void saveData(){
-    tempSettings.begin("tempSettings", true);
+    tempSettings.begin("tempSettings", false);
     tempSettings.putFloat("minTemp", minTemp);
     tempSettings.putFloat("maxTemp", maxTemp);
     tempSettings.putBool("notifs", notifs);
